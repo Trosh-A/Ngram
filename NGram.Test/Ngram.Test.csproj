@@ -24,4 +24,10 @@
     <ProjectReference Include="..\NGram.dll\Ngram.dll.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Test1.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

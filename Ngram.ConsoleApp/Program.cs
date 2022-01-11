@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -13,8 +12,8 @@ namespace Troshkin.Ngram.ConsoleApp
   {
     static async Task Main(string[] args)
     {
-      Console.WriteLine("Начало работы программы");
       var timer = Stopwatch.StartNew();
+      Console.WriteLine("Начало работы программы");
       if (args.Length == 0)
       {
         Console.WriteLine("Не задан путь к файлу");
@@ -24,26 +23,46 @@ namespace Troshkin.Ngram.ConsoleApp
       string pathToFile = args[0];
       try
       {
-        var progressIndicator = new Progress<long>(prog => Debug.WriteLine($"Завершена строка {prog}"));
+        long completedLines = 0;
+        var cts = new CancellationTokenSource();
+        var progressIndicator = new Progress<int>(line => Interlocked.Increment(ref completedLines));
+        using var sr = new StreamReader(pathToFile, new FileStreamOptions() { Mode = FileMode.Open, Access = FileAccess.Read });
         var concreteTimer = Stopwatch.StartNew();
-        var allResults = await Ngram.GetNgramAsync(pathToFile, 3, progressIndicator);
-        timer.Stop();
-        if (allResults is null)
+        Console.CancelKeyPress += (_, _) => cts.Cancel();
+        var results = await Ngram.GetMostFreqTrigramsAsync(sr, 10, progressIndicator, cts.Token);
+        concreteTimer.Stop();
+        if (results is null)
         {
-          Console.WriteLine("Ошибка. Операция не выполнена.");
+          Console.WriteLine("Ошибка выполнения операции");
+          Console.ReadKey();
         }
         else
         {
-          PrintResults(allResults.Take(10));
-          Console.WriteLine($"Время работы задачи по поиску триплетов: {concreteTimer.ElapsedMilliseconds} мс");
-          Console.WriteLine($"Время работы всей программы {timer.ElapsedMilliseconds} мс");
+          Console.Write($"Обработано строк: ");
+          Console.ForegroundColor = ConsoleColor.Green;
+          Console.WriteLine(completedLines);
+          Console.ResetColor();
+          if (!results.Any()) Console.WriteLine("Триплетов в тексте нет");
+          else
+          {
+            Console.WriteLine("Топ 10 самых встречающихся триплетов");
+            foreach (var ngram in results)
+            {
+              Console.WriteLine($"{ngram.Ngram} - {ngram.Count}");
+            }
+            Console.WriteLine($"Время работы задачи по поиску триплетов: {concreteTimer.ElapsedMilliseconds} мс");
+          }
         }
+      }
+      catch (OverflowException)
+      {
+        Console.WriteLine("Текст слишком большой");
+        Console.ReadKey();
       }
       catch (FileNotFoundException)
       {
         Console.WriteLine("Файл не найден");
         Console.ReadKey();
-        return;
       }
       catch (PathTooLongException)
       {
@@ -78,24 +97,10 @@ namespace Troshkin.Ngram.ConsoleApp
       }
       finally
       {
+        timer.Stop();
+        Console.WriteLine($"Время работы всей программы {timer.ElapsedMilliseconds} мс");
         Console.WriteLine("Нажмите любую кнопку для выхода...");
         Console.ReadKey();
-      }
-    }
-
-    private static void PrintResults(IEnumerable<NgramNode> results)
-    {
-      if (!results.Any())
-      {
-        Console.WriteLine("Триплетов в тексте нет");
-      }
-      else
-      {
-        Console.WriteLine("Топ 10 самых встречающихся триплетов");
-        foreach (var ngram in results)
-        {
-          Console.WriteLine($"{ngram.Ngram} - {ngram.Count}");
-        }
       }
     }
   }

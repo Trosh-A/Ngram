@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Troshkin.Ngram;
+﻿namespace Troshkin.Ngram;
 
 public struct NgramNode
 {
