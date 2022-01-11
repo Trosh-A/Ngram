@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Ngram.ConsoleApp": {
+      "commandName": "Project",
+      "commandLineArgs": "Text.txt"
+    }
+  }
+}
