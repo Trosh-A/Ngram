@@ -23,7 +23,7 @@ public static class Ngram
     CancellationToken cancelToken = default)
   {
     string? line;
-    //потокобезопасная коллекция для NGram
+    //потокобезопасная коллекция для Ngram
     var ngrams = new ConcurrentDictionary<string, int>();
     while ((line = await sr.ReadLineAsync()) is not null)
     {
@@ -55,7 +55,6 @@ public static class Ngram
     int k)
   {
     string? line;
-    //Не ConcurrentDictionary<string, int>, потому что AddOrUpdate непотокобезопасен Func 
     var ngrams = new List<string>();
     while ((line = await sr.ReadLineAsync()) is not null)
     {
